@@ -1,0 +1,18 @@
+{
+  "name": "sonar-sweep",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^16.11.11",
+    "@types/ramda": "^0.27.58",
+    "ramda": "^0.27.1",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.2"
+  }
+}
