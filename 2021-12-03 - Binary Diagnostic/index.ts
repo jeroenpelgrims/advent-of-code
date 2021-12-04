@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { EOL } from "os";
 import { range } from "ramda";
 
-const values = readFileSync("./testinput")
+const values = readFileSync("./input")
     .toString()
     .split(EOL);
 const numberLength = values[0].length;
@@ -11,7 +11,7 @@ const numberLength = values[0].length;
 function mostUsed(numbers: string[], position: number) {
     const ones = numbers.filter(number => number[position] === "1").length;
     const zeroes = numbers.length - ones;
-    return ones > zeroes ? "1" : "0";
+    return ones >= zeroes ? "1" : "0";
 }
 
 function inverse(binary: string) {
@@ -34,8 +34,8 @@ function splitMostLeast(
         return [ mosts[0], leasts[0] ];
     }
 
-    const most = gamma[position];
-    const least = epsilon[position];
+    const most = mostUsed(mosts, position);
+    const least = inverse(mostUsed(leasts, position));
     return splitMostLeast([
         mosts.length === 1 ? mosts : mosts.filter(x => x[position] === most),
         leasts.length === 1 ? leasts : leasts.filter(x => x[position] === least)
