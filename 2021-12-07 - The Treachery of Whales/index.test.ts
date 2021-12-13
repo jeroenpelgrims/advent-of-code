@@ -1,14 +1,14 @@
 import test from "ava";
 import { readFileSync } from "fs";
-import { bestPosition, countFuel, parseInput } from ".";
+import { bestPosition, bestPosition2, countFuel, countFuel2, parseInput, singleFuel } from ".";
 
 const testinput = readFileSync(__dirname + "/testinput").toString();
 
 test('solution', t => {
     const positions = parseInput(readFileSync(__dirname + "/input").toString());
-    const bestPos = bestPosition(positions);
 
-    console.log("2021-12-07 part 1", countFuel(bestPos, positions));
+    console.log("2021-12-07 part 1", countFuel(bestPosition(positions), positions));
+    console.log("2021-12-07 part 2", countFuel2(bestPosition2(positions), positions));
     t.is(true, true);
 });
 
@@ -27,4 +27,25 @@ test('countFuel', t => {
 test('bestPosition', t => {
     const positions = parseInput(testinput);
     t.is(bestPosition(positions), 2);
+});
+
+test('countFuel2', t => {
+    const positions = parseInput(testinput);
+    t.deepEqual(countFuel2(5, positions), 168);
+    t.deepEqual(countFuel2(2, positions), 206);
+});
+
+test('bestPosition2', t => {
+    const positions = parseInput(testinput);
+    t.is(bestPosition2(positions), 5);
+});
+
+test('singleFuel', t => {
+    t.is(singleFuel(16, 5), 66);
+    t.is(singleFuel(1, 5), 10);
+    t.is(singleFuel(2, 5), 6);
+    t.is(singleFuel(0, 5), 15);
+    t.is(singleFuel(4, 5), 1);
+    t.is(singleFuel(7, 5), 3);
+    t.is(singleFuel(14, 5), 45);
 });
