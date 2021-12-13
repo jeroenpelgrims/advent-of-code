@@ -1,24 +1,16 @@
-import { sum, median, converge, divide, length } from "ramda";
-
-const average = (xs: number[]) => divide(sum(xs), length(xs));
+import { sum, median, mean } from "ramda";
 
 export function parseInput(input: string) {
     return input.split(",").map(x => parseInt(x));
 }
 
-export function countFuel(targetPosition: number, positions: number[]) {
-    const values = positions.map(position => Math.abs(targetPosition - position));
-    return sum(values);
+export function fuel(from: number, to: number) {
+    return Math.abs(from - to);
 }
 
-export function singleFuel(from: number, to: number) {
+export function fuel2(from: number, to: number) {
     const n = Math.abs(from - to);
     return (n * (n + 1)) / 2;
-}
-
-export function countFuel2(targetPosition: number, positions: number[]) {
-    const values = positions.map(position => singleFuel(targetPosition, position));
-    return sum(values);
 }
 
 export function bestPosition(positions: number[]) {
@@ -26,5 +18,21 @@ export function bestPosition(positions: number[]) {
 }
 
 export function bestPosition2(positions: number[]) {
-    return Math.round(average(positions));
+    return Math.round(mean(positions));
+}
+
+export function sumOfFuels(f: (from: number, to: number) => number, bestPosition: number, positions: number[]){
+    return sum(positions.map(position => f(position, bestPosition)));
+}
+
+export function part1(input: string) {
+    const positions = parseInput(input);
+    const best = bestPosition(positions);
+    return sumOfFuels(fuel, best, positions);
+}
+
+export function part2(input: string) {
+    const positions = parseInput(input);
+    const best = bestPosition2(positions);
+    return sumOfFuels(fuel2, best, positions);
 }

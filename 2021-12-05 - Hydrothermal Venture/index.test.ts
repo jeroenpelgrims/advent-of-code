@@ -17,8 +17,8 @@ test('results', t => {
     const result2 = part2(input);
         
     t.true(true);
-    console.log("part 1", result1);
-    console.log("part 2", result2);
+    console.log("2021-12-05 part 1", result1);
+    console.log("2021-12-05 part 2", result2);
 });
 
 test("expandToPointsStraight", t => {
