@@ -19,8 +19,8 @@ test('testinput', t => {
 
 test('result', t => {
     const input = readFileSync(__dirname + "/input").toString();
-    console.log("part 1", simulate(input, 80));
-    console.log("part 2", simulate(input, 256));
+    console.log("2021-12-06 part 1", simulate(input, 80));
+    console.log("2021-12-06 part 2", simulate(input, 256));
     t.true(true);
 });
 
