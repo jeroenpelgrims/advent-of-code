@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "2021-12-07 - The Treachery of Whales-fs", "2021-12-07 - The Treachery of Whales-fs\2021-12-07 - The Treachery of Whales-fs.fsproj", "{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {27CC05C4-34D4-49CA-9488-B4E092D74770}
+	EndGlobalSection
+EndGlobal

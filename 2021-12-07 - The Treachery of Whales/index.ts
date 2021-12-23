@@ -21,7 +21,7 @@ export function bestPosition2(positions: number[]) {
     return Math.round(mean(positions));
 }
 
-export function sumOfFuels(f: (from: number, to: number) => number, bestPosition: number, positions: number[]){
+export function sumOfFuels(f: (typeof fuel | typeof fuel2), bestPosition: number, positions: number[]){
     return sum(positions.map(position => f(position, bestPosition)));
 }
 
