@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>_2021_12_08___Seven_Segment_Search</RootNamespace>
+	  <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="input.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="testinput.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="Day8.Lib.fs" />
+    <Compile Include="Day8.Test.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FSharp.Stats" Version="0.4.2" />
+		<PackageReference Include="FSharpPlus" Version="1.2.2" />
+		<PackageReference Include="xunit" Version="2.4.1" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+		<Compile Remove="**\*.Tests.cs" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(Configuration)' != 'Release'">
+		<PackageReference Include="xunit" Version="2.4.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+</Project>

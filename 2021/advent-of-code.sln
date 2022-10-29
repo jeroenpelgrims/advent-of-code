@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "2021-12-07 - The Treachery of Whales-fs", "2021-12-07 - The Treachery of Whales-fs\2021-12-07 - The Treachery of Whales-fs.fsproj", "{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "2021-12-08 - Seven Segment Search", "2021-12-08 - Seven Segment Search\2021-12-08 - Seven Segment Search.fsproj", "{49D43880-0DFE-4B24-B619-11455F3C0901}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F90C8F84-807E-4BD4-AEA5-A10107F59DF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49D43880-0DFE-4B24-B619-11455F3C0901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49D43880-0DFE-4B24-B619-11455F3C0901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49D43880-0DFE-4B24-B619-11455F3C0901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49D43880-0DFE-4B24-B619-11455F3C0901}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
