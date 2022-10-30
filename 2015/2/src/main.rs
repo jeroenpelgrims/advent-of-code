@@ -9,8 +9,8 @@ fn parse_dimensions(text: &str) -> Dimensions {
     (digits[0], digits[1], digits[2])
 }
 
-fn areas((w, b, h): Dimensions) -> Areas {
-    (w * b, b * h, w * h)
+fn areas((x, y, z): Dimensions) -> Areas {
+    (x * y, y * z, x * z)
 }
 
 fn min_area((a1, a2, a3): Areas) -> i32 {
@@ -23,10 +23,33 @@ fn area(text: &str) -> i32 {
     (a1 + a2 + a3) * 2 + min
 }
 
+fn shortest_distance((x, y, z): Dimensions) -> i32 {
+    let mut arr = [x, y, z];
+    arr.sort();
+    let [a, b, _] = arr;
+    a + a + b + b
+}
+
+fn bow_distance((x, y, z): Dimensions) -> i32 {
+    x * y * z
+}
+
+fn total_ribbon(value: &str) -> i32 {
+    let dimension = parse_dimensions(value);
+    shortest_distance(dimension) + bow_distance(dimension)
+}
+
 fn main() {
     let contents = fs::read_to_string("./input.txt").unwrap();
     let total = contents.lines().map(area).reduce(|a, b| a + b).unwrap();
-    print!("{}", total);
+    println!("{}", total);
+
+    let total2 = contents
+        .lines()
+        .map(total_ribbon)
+        .reduce(|a, b| a + b)
+        .unwrap();
+    println!("{}", total2);
 }
 
 #[cfg(test)]
@@ -75,5 +98,24 @@ mod tests {
     fn test_area() {
         assert_eq!(area("2x3x4"), 58);
         assert_eq!(area("1x1x10"), 43);
+    }
+
+    #[test]
+    fn test_shortest_distance() {
+        assert_eq!(shortest_distance((2, 3, 4)), 10);
+        assert_eq!(shortest_distance((1, 1, 10)), 4);
+        assert_eq!(shortest_distance((5, 1, 4)), 1 + 1 + 4 + 4);
+    }
+
+    #[test]
+    fn test_bow_distance() {
+        assert_eq!(bow_distance((2, 3, 4)), 24);
+        assert_eq!(bow_distance((1, 1, 10)), 10);
+    }
+
+    #[test]
+    fn test_total_ribbon() {
+        assert_eq!(total_ribbon("2x3x4"), 34);
+        assert_eq!(total_ribbon("1x1x10"), 14);
     }
 }
