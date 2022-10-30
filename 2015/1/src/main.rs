@@ -14,17 +14,15 @@ fn lift(input: &str) -> i32 {
         .unwrap()
 }
 
-fn lift2(input: &str) -> i32 {
+fn lift2(input: &str) -> usize {
     let mut sum = 0;
-    let mut position = 1;
-    for code in input.chars() {
+    for (position, code) in input.chars().enumerate() {
         sum += value(code);
         if sum < 0 {
-            return position;
+            return position + 1;
         }
-        position += 1;
     }
-    position
+    0
 }
 
 fn main() {
@@ -68,12 +66,12 @@ mod tests {
     }
 
     #[test]
-    fn lift2_n1() {
+    fn lift2_1() {
         assert_eq!(lift2(")"), 1);
     }
 
     #[test]
-    fn lift5_n1() {
+    fn lift2_5() {
         assert_eq!(lift2("()())"), 5);
     }
 }
