@@ -1,3 +1,5 @@
+use itertools::Itertools;
+use std::collections::HashMap;
 use std::fs;
 
 fn is_vowel(c: char) -> bool {
@@ -42,11 +44,80 @@ fn is_nice(text: &str) -> bool {
     !result.bad_string && result.double_count >= 1 && result.vowel_count >= 3
 }
 
+fn contains_double_char2(text: &str) -> bool {
+    let mut chars = text.chars();
+    let first = chars.next().unwrap();
+    let second = chars.next().unwrap();
+    let result = chars.fold((0, first, second), |(count, first, second), current| {
+        (
+            count + if first == current { 1 } else { 0 },
+            second,
+            current,
+        )
+    });
+    result.0 > 0
+}
+
+fn detrip(text: &str) -> String {
+    let mut chars = text.chars();
+    let count = text.len();
+    let mut result: Vec<char> = Vec::new();
+    result.push(chars.next().unwrap());
+    result.push(chars.next().unwrap());
+    result.push(chars.next().unwrap());
+
+    for (i, c) in chars.enumerate() {
+        let last3: Vec<&char> = result.iter().rev().take(3).rev().collect();
+
+        if last3[0] == last3[1] && last3[1] == last3[2] && *last3[2] == c {
+            result.push(c);
+        } else if last3[0] == last3[1] && last3[1] == last3[2] && *last3[2] != c {
+            result.pop();
+            result.push(c);
+        } else {
+            if i + 3 == count - 1 && last3[1] == last3[2] && *last3[2] == c {
+                continue;
+            } else {
+                result.push(c);
+            }
+        }
+    }
+
+    result.iter().collect::<String>()
+}
+
+fn contains_repeating_pair2(text: &str) -> bool {
+    let detrip_text = detrip(text);
+    let pairs = detrip_text
+        .chars()
+        .tuple_windows::<(char, char)>()
+        .map(|(a, b)| [a, b].iter().collect::<String>());
+    let mut counts: HashMap<String, i32> = HashMap::new();
+
+    for pair in pairs {
+        counts
+            .entry(pair.clone())
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+
+    counts.values().filter(|value| **value > 1).count() > 0
+}
+
+fn is_nice2(text: &str) -> bool {
+    contains_double_char2(text) && contains_repeating_pair2(text)
+}
+
 fn main() {
     let text = fs::read_to_string("./input.txt").unwrap();
-    let lines = text.lines();
-    let nice_count = lines.fold(0, |result, line| result + if is_nice(line) { 1 } else { 0 });
+    let nice_count = text
+        .lines()
+        .fold(0, |result, line| result + if is_nice(line) { 1 } else { 0 });
     println!("1) {}", nice_count);
+    let nice_count2 = text.lines().fold(0, |result, line| {
+        result + if is_nice2(line) { 1 } else { 0 }
+    });
+    println!("2) {}", nice_count2);
 }
 
 #[cfg(test)]
@@ -60,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn test_not_nice() {
+    fn test_naughty() {
         assert!(!is_nice("jchzalrnumimnmhp"));
         assert!(!is_nice("haegwjzuvuyypxyu"));
         assert!(!is_nice("dvszwmarrgswjxmb"));
@@ -86,7 +157,40 @@ mod tests {
     }
 
     #[test]
-    fn test_foo() {
-        assert!(['c', 'a'].eq(&['c', 'a']));
+    fn test_is_nice2() {
+        assert!(is_nice2("qjhvhtzxzqqjkmpb"));
+        assert!(is_nice2("xxyxx"));
+    }
+
+    #[test]
+    fn test_naughty2() {
+        assert!(!is_nice2("uurcxstgmygtbstg"));
+        assert!(!is_nice2("ieodomkazucvgmuy"));
+    }
+
+    #[test]
+    fn test_contains_double_char2() {
+        assert!(contains_double_char2("xyx"));
+        assert!(contains_double_char2("abcdefeghi"));
+        assert!(contains_double_char2("aaa"));
+        assert!(!contains_double_char2("uurcxstgmygtbstg"));
+    }
+
+    #[test]
+    fn test_contains_repeating_pair2() {
+        assert!(contains_repeating_pair2("xyxy"));
+        assert!(contains_repeating_pair2("aabcdefgaa"));
+        assert!(contains_repeating_pair2("uurcxstgmygtbstg"));
+        assert!(!contains_repeating_pair2("ieodomkazucvgmuy"));
+    }
+
+    #[test]
+    fn test_detrip() {
+        assert_eq!(detrip("xaaa"), "xaa");
+        assert_eq!(detrip("bbaaabb"), "bbaabb");
+        assert_eq!(detrip("xaba"), "xaba");
+        assert_eq!(detrip("xbaa"), "xbaa");
+        assert_eq!(detrip("aabaa"), "aabaa");
+        assert_eq!(detrip("aaaa"), "aaaa");
     }
 }
