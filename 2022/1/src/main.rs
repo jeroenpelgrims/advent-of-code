@@ -51,7 +51,4 @@ mod tests {
         let sorted = sort_elves(elves).collect::<Vec<i32>>();
         assert_eq!(sorted, vec![24000, 11000, 10000, 6000, 4000] as Vec<i32>);
     }
-
-    // #[test]
-    // fn test_parse_action() {}
 }
