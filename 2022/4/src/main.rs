@@ -24,7 +24,7 @@ fn contains((a, b): Zone, (c, d): Zone) -> bool {
 }
 
 fn overlaps(((a, b), (c, d)): Assignment) -> bool {
-    let sections = (a..=b).chain((c..=d)).into_iter();
+    let sections = (a..=b).chain(c..=d).into_iter();
     sections.clone().count() > sections.clone().sorted().dedup().count()
 }
 
