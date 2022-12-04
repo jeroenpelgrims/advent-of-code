@@ -67,20 +67,21 @@ fn detrip(text: &str) -> String {
     result.push(chars.next().unwrap());
 
     for (i, c) in chars.enumerate() {
-        let last3: Vec<&char> = result.iter().rev().take(3).rev().collect();
+        let last3 = vec![
+            result[result.len() - 3],
+            result[result.len() - 2],
+            result[result.len() - 1],
+        ];
 
-        if last3[0] == last3[1] && last3[1] == last3[2] && *last3[2] == c {
-            result.push(c);
-        } else if last3[0] == last3[1] && last3[1] == last3[2] && *last3[2] != c {
+        if last3[0] == last3[1] && last3[1] == last3[2] && last3[2] != c {
             result.pop();
-            result.push(c);
-        } else {
-            if i + 3 == count - 1 && last3[1] == last3[2] && *last3[2] == c {
-                continue;
-            } else {
-                result.push(c);
-            }
         }
+
+        if i + 3 == count - 1 && last3[1] == last3[2] && last3[2] == c {
+            continue;
+        }
+
+        result.push(c);
     }
 
     result.iter().collect::<String>()
