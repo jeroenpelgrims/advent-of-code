@@ -25,10 +25,27 @@ fn backpack_priorities<'a>(backpacks: impl Iterator<Item = (&'a str, &'a str)>) 
     backpacks.map(find_shared_item).map(priority).sum::<i32>()
 }
 
+fn find_group_item(elf1: &str, elf2: &str, elf3: &str) -> char {
+    vec![elf1.chars(), elf2.chars(), elf3.chars()]
+        .iter()
+        .map(|x| x.clone())
+        .multi_cartesian_product()
+        .find(|v| v[0] == v[1] && v[1] == v[2])
+        .unwrap()[0]
+}
+
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
     let backpacks = input.lines().map(parse_backpack);
     println!("1: {:?}", backpack_priorities(backpacks));
+
+    let groups = input.lines().map(|l| l).chunks(3);
+    let group_items = groups.into_iter().map(|g| {
+        let vg = g.collect::<Vec<&str>>();
+        find_group_item(vg[0], vg[1], vg[2])
+    });
+    let priority_sum = group_items.map(priority).sum::<i32>();
+    println!("2: {:?}", priority_sum);
 }
 
 #[cfg(test)]
@@ -97,5 +114,25 @@ mod tests {
         let input = fs::read_to_string("./test-input.txt").unwrap();
         let backpacks = input.lines().map(parse_backpack);
         assert_eq!(backpack_priorities(backpacks), 157);
+    }
+
+    #[test]
+    fn test_find_group_item() {
+        assert_eq!(
+            find_group_item(
+                "vJrwpWtwJgWrhcsFMMfFFhFp",
+                "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL",
+                "PmmdzqPrVvPwwTWBwg"
+            ),
+            'r'
+        );
+        assert_eq!(
+            find_group_item(
+                "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn",
+                "ttgJtRGJQctTZtZT",
+                "CrZsJsPPZsGzwwsLwLmpwMDw"
+            ),
+            'Z'
+        );
     }
 }
