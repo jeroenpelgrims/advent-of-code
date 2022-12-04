@@ -1,5 +1,7 @@
 use std::fs;
 
+use itertools::Itertools;
+
 type Zone = (i32, i32);
 type Assignment = (Zone, Zone);
 
@@ -21,14 +23,20 @@ fn contains((a, b): Zone, (c, d): Zone) -> bool {
     a <= c && b >= d
 }
 
+fn overlaps(((a, b), (c, d)): Assignment) -> bool {
+    let sections = (a..=b).chain((c..=d)).into_iter();
+    sections.clone().count() > sections.clone().sorted().dedup().count()
+}
+
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
-    let overlapping_count = input
-        .lines()
-        .map(parse_assignment)
-        .filter(|x| fully_contains(*x))
-        .count();
-    println!("1: {:?}", overlapping_count);
+    let assignments = input.lines().map(parse_assignment);
+
+    let contains_count = assignments.clone().filter(|x| fully_contains(*x)).count();
+    println!("1: {:?}", contains_count);
+
+    let overlapping_count = assignments.clone().filter(|x| overlaps(*x)).count();
+    println!("2: {:?}", overlapping_count);
 }
 
 #[cfg(test)]
@@ -59,5 +67,15 @@ mod tests {
     fn test_contains() {
         assert_eq!(contains((2, 8), (3, 7)), true);
         assert_eq!(contains((6, 6), (4, 6)), false);
+    }
+
+    #[test]
+    fn test_overlaps() {
+        assert_eq!(overlaps(((2, 4), (6, 8))), false);
+        assert_eq!(overlaps(((2, 3), (4, 5))), false);
+        assert_eq!(overlaps(((5, 7), (7, 9))), true);
+        assert_eq!(overlaps(((2, 8), (3, 7))), true);
+        assert_eq!(overlaps(((6, 6), (4, 6))), true);
+        assert_eq!(overlaps(((2, 6), (4, 8))), true);
     }
 }
