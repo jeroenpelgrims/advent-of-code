@@ -1,6 +1,5 @@
-use std::fs;
-
 use itertools::Itertools;
+use std::fs;
 
 type Zone = (i32, i32);
 type Assignment = (Zone, Zone);
