@@ -1,11 +1,15 @@
+use core::panic;
+use std::fs;
+
 type Point = (i32, i32);
 
+#[derive(Copy, Clone)]
 struct Area {
     from: Point,
     until: Point,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 enum StateAction {
     On,
     Off,
@@ -15,6 +19,23 @@ enum StateAction {
 struct Instruction {
     action: StateAction,
     area: Area,
+}
+
+#[derive(Debug)]
+struct Light {
+    position: Point,
+    state: bool,
+}
+
+fn is_point_in_area((x, y): Point, area: Area) -> bool {
+    let (x1, y1) = area.from;
+    let (x2, y2) = area.until;
+    let x_min = x1.min(x2);
+    let x_max = x1.max(x2);
+    let y_min = y1.min(y2);
+    let y_max = y1.max(y2);
+
+    x_min <= x && x <= x_max && y_min <= y && y <= y_max
 }
 
 fn point_from_str(str: &str) -> Point {
@@ -57,9 +78,49 @@ fn line_to_instruction(line: &str) -> Instruction {
     }
 }
 
-use core::panic;
+fn apply_instruction(state: bool, action: StateAction) -> bool {
+    match action {
+        StateAction::On => true,
+        StateAction::Off => false,
+        StateAction::Toggle => !state,
+    }
+}
 
-fn main() {}
+fn apply_instructions(position: Point, instructions: &Vec<Instruction>) -> bool {
+    instructions.iter().fold(false, |state, instruction| {
+        if is_point_in_area(position, instruction.area) {
+            apply_instruction(state, instruction.action)
+        } else {
+            state
+        }
+    })
+}
+
+fn main() {
+    let text = fs::read_to_string("./input.txt").unwrap();
+    let instructions = text.lines().map(line_to_instruction).collect::<Vec<_>>();
+
+    let columns = 1000;
+    let positions = (0..999_999).map(|i| {
+        let row = i / columns;
+        let column = i % columns;
+        (column, row)
+    });
+    let answer1 = positions
+        .map(|position| apply_instructions(position, &instructions))
+        .fold(0, |result, state| result + if state { 1 } else { 0 });
+    println!("1: {:?}", answer1);
+
+    // let lights: Vec<_> = (0..999)
+    //     .flat_map(|i| {
+    //         (0..999).map(move |j| Light {
+    //             position: (i, j),
+    //             state: false,
+    //         })
+    //     })
+    //     .collect();
+    // print!("{:?}", lights);
+}
 
 #[cfg(test)]
 mod tests {
@@ -93,5 +154,43 @@ mod tests {
     fn test_point_from_str() {
         let p = point_from_str("489,959");
         assert_eq!(p, (489, 959));
+    }
+
+    #[test]
+    fn test_is_point_in_area() {
+        assert!(is_point_in_area(
+            (5, 5),
+            Area {
+                from: (0, 0),
+                until: (10, 10),
+            }
+        ));
+        assert!(!is_point_in_area(
+            (0, 5),
+            Area {
+                from: (1, 0),
+                until: (10, 10),
+            }
+        ));
+        assert!(!is_point_in_area(
+            (5, 0),
+            Area {
+                from: (0, 1),
+                until: (10, 10),
+            }
+        ));
+    }
+
+    #[test]
+    fn test_apply_instruction() {
+        assert!(apply_instruction(false, StateAction::On));
+        assert!(!apply_instruction(true, StateAction::Off));
+        assert!(!apply_instruction(true, StateAction::Toggle));
+        assert!(apply_instruction(false, StateAction::Toggle));
+    }
+
+    #[test]
+    fn test_apply_instructions() {
+        // todo!()
     }
 }
