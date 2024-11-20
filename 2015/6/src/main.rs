@@ -21,12 +21,6 @@ struct Instruction {
     area: Area,
 }
 
-#[derive(Debug)]
-struct Light {
-    position: Point,
-    state: bool,
-}
-
 fn is_point_in_area((x, y): Point, area: Area) -> bool {
     let (x1, y1) = area.from;
     let (x2, y2) = area.until;
@@ -86,10 +80,28 @@ fn apply_instruction(state: bool, action: StateAction) -> bool {
     }
 }
 
+fn apply_instruction2(state: i32, action: StateAction) -> i32 {
+    match action {
+        StateAction::On => state + 1,
+        StateAction::Off => (state - 1).max(0),
+        StateAction::Toggle => state + 2,
+    }
+}
+
 fn apply_instructions(position: Point, instructions: &Vec<Instruction>) -> bool {
     instructions.iter().fold(false, |state, instruction| {
         if is_point_in_area(position, instruction.area) {
             apply_instruction(state, instruction.action)
+        } else {
+            state
+        }
+    })
+}
+
+fn apply_instructions2(position: Point, instructions: &Vec<Instruction>) -> i32 {
+    instructions.iter().fold(0, |state, instruction| {
+        if is_point_in_area(position, instruction.area) {
+            apply_instruction2(state, instruction.action)
         } else {
             state
         }
@@ -107,19 +119,15 @@ fn main() {
         (column, row)
     });
     let answer1 = positions
+        .clone()
         .map(|position| apply_instructions(position, &instructions))
         .fold(0, |result, state| result + if state { 1 } else { 0 });
     println!("1: {:?}", answer1);
-
-    // let lights: Vec<_> = (0..999)
-    //     .flat_map(|i| {
-    //         (0..999).map(move |j| Light {
-    //             position: (i, j),
-    //             state: false,
-    //         })
-    //     })
-    //     .collect();
-    // print!("{:?}", lights);
+    let answer2 = positions
+        .clone()
+        .map(|position| apply_instructions2(position, &instructions))
+        .fold(0, |result, state| result + state);
+    println!("2: {:?}", answer2);
 }
 
 #[cfg(test)]
