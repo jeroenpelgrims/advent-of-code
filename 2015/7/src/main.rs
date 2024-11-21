@@ -1,6 +1,4 @@
 use core::panic;
-use std::borrow::Borrow;
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs;
 
@@ -138,6 +136,15 @@ fn main() {
         &mut context,
     );
     println!("1: {:?}", result);
+
+    let variable2 = "a".to_owned();
+    let mut context2 = make_context(&input);
+    context2.insert("b".to_string(), Expression::Term(Term::Value(result)));
+    let result2 = eval_expression(
+        &Expression::Term(Term::Variable(variable2)),
+        &mut context2,
+    );
+    println!("1: {:?}", result2);
 }
 
 #[cfg(test)]
