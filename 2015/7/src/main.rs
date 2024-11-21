@@ -7,7 +7,7 @@ type Context = HashMap<Term, Expression>;
 #[derive(Eq, Hash, Debug, PartialEq)]
 enum Term {
     Variable(String),
-    Value(i32),
+    Value(u16),
 }
 
 #[derive(Debug, PartialEq)]
@@ -26,7 +26,7 @@ enum Expression {
 }
 
 fn parse_term(term: &str) -> Term {
-    if let Ok(number) = term.parse::<i32>() {
+    if let Ok(number) = term.parse::<u16>() {
         Term::Value(number)
     } else {
         Term::Variable(term.to_string())
@@ -79,18 +79,48 @@ fn make_context(input: &str) -> Context {
     context
 }
 
-fn eval(expression: Expression, context: Context) {
-    todo!()
+fn eval_operation(operation: &Operation, context: &Context) -> u16 {
+    match operation {
+        Operation::And(left, right) => eval_term(left, &context) & eval_term(right, &context),
+        Operation::Or(left, right) => eval_term(left, &context) | eval_term(right, &context),
+        Operation::Lshift(left, right) => eval_term(left, &context) << eval_term(right, &context),
+        Operation::Rshift(left, right) => eval_term(left, &context) >> eval_term(right, &context),
+        Operation::Not(term) => !eval_term(term, &context),
+    }
+}
+
+fn eval_term(term: &Term, context: &Context) -> u16 {
+    match term {
+        Term::Value(value) => value.clone(),
+        variable => {
+            let expression = context.get(&variable).unwrap();
+            eval_expression(expression, context)
+        }
+    }
+}
+
+fn eval_expression(expression: &Expression, context: &Context) -> u16 {
+    match expression {
+        Expression::Term(term) => eval_term(term, context),
+        Expression::Operation(operation) => eval_operation(operation, context),
+    }
 }
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
+    //     let input = "123 -> x
+    // 456 -> y
+    // x AND y -> d
+    // x OR y -> e
+    // x LSHIFT 2 -> f
+    // y RSHIFT 2 -> g
+    // NOT x -> h
+    // NOT y -> i";
+
+    let variable = "a".to_owned();
     let context = make_context(&input);
-    let result = eval(Expression::Term(Term::Variable("a".to_string())), context);
-    println!("{:?}", result);
-    // println!("{:?}", test_input);
-    // let text = fs::read_to_string("./input.txt").unwrap();
-    // let instructions = text.lines().map(line_to_instruction).collect::<Vec<_>>();
+    let result = eval_expression(&Expression::Term(Term::Variable(variable)), &context);
+    println!("1: {:?}", result);
 }
 
 #[cfg(test)]
