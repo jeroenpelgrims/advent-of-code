@@ -1,16 +1,18 @@
 use core::panic;
+use std::borrow::Borrow;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs;
 
-type Context = HashMap<Term, Expression>;
+type Context = HashMap<String, Expression>;
 
-#[derive(Eq, Hash, Debug, PartialEq)]
+#[derive(Eq, Hash, Debug, PartialEq, Clone)]
 enum Term {
     Variable(String),
     Value(u16),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Operation {
     And(Term, Term),
     Or(Term, Term),
@@ -19,7 +21,7 @@ enum Operation {
     Not(Term),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Expression {
     Term(Term),
     Operation(Operation),
@@ -37,10 +39,18 @@ fn parse_operation(operation: &str) -> Operation {
     let parts = operation.split(" ").collect::<Vec<&str>>();
 
     match parts.as_slice() {
-        [left, "AND", right] => Operation::And(parse_term(left), parse_term(right)),
-        [left, "OR", right] => Operation::Or(parse_term(left), parse_term(right)),
-        [left, "LSHIFT", right] => Operation::Lshift(parse_term(left), parse_term(right)),
-        [left, "RSHIFT", right] => Operation::Rshift(parse_term(left), parse_term(right)),
+        [left, "AND", right] => {
+            Operation::And(parse_term(left), parse_term(right))
+        }
+        [left, "OR", right] => {
+            Operation::Or(parse_term(left), parse_term(right))
+        }
+        [left, "LSHIFT", right] => {
+            Operation::Lshift(parse_term(left), parse_term(right))
+        }
+        [left, "RSHIFT", right] => {
+            Operation::Rshift(parse_term(left), parse_term(right))
+        }
         ["NOT", term] => Operation::Not(parse_term(term)),
         _ => panic!("Unsupported pattern for operation"),
     }
@@ -58,12 +68,12 @@ fn parse_expression(expression: &str) -> Expression {
     }
 }
 
-fn parse_line(line: &str) -> (Term, Expression) {
+fn parse_line(line: &str) -> (String, Expression) {
     let parts = line.split(" -> ").collect::<Vec<&str>>();
 
     match parts.as_slice() {
         [expression, variable] => {
-            let variable = Term::Variable(variable.to_string());
+            let variable = variable.to_string();
             (variable, parse_expression(expression))
         }
         _ => panic!("Unsupported definition line"),
@@ -79,27 +89,40 @@ fn make_context(input: &str) -> Context {
     context
 }
 
-fn eval_operation(operation: &Operation, context: &Context) -> u16 {
+fn eval_operation(operation: &Operation, context: &mut Context) -> u16 {
     match operation {
-        Operation::And(left, right) => eval_term(left, &context) & eval_term(right, &context),
-        Operation::Or(left, right) => eval_term(left, &context) | eval_term(right, &context),
-        Operation::Lshift(left, right) => eval_term(left, &context) << eval_term(right, &context),
-        Operation::Rshift(left, right) => eval_term(left, &context) >> eval_term(right, &context),
-        Operation::Not(term) => !eval_term(term, &context),
+        Operation::And(left, right) => {
+            eval_term(left, context) & eval_term(right, context)
+        }
+        Operation::Or(left, right) => {
+            eval_term(left, context) | eval_term(right, context)
+        }
+        Operation::Lshift(left, right) => {
+            eval_term(left, context) << eval_term(right, context)
+        }
+        Operation::Rshift(left, right) => {
+            eval_term(left, context) >> eval_term(right, context)
+        }
+        Operation::Not(term) => !eval_term(term, context),
     }
 }
 
-fn eval_term(term: &Term, context: &Context) -> u16 {
+fn eval_term(term: &Term, context: &mut Context) -> u16 {
     match term {
         Term::Value(value) => value.clone(),
-        variable => {
-            let expression = context.get(&variable).unwrap();
-            eval_expression(expression, context)
+        Term::Variable(variable) => {
+            let expression = context.get(variable).unwrap().clone();
+            let result = eval_expression(&expression, context);
+            context.insert(
+                variable.to_string(),
+                Expression::Term(Term::Value(result)),
+            );
+            result
         }
     }
 }
 
-fn eval_expression(expression: &Expression, context: &Context) -> u16 {
+fn eval_expression(expression: &Expression, context: &mut Context) -> u16 {
     match expression {
         Expression::Term(term) => eval_term(term, context),
         Expression::Operation(operation) => eval_operation(operation, context),
@@ -108,18 +131,12 @@ fn eval_expression(expression: &Expression, context: &Context) -> u16 {
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
-    //     let input = "123 -> x
-    // 456 -> y
-    // x AND y -> d
-    // x OR y -> e
-    // x LSHIFT 2 -> f
-    // y RSHIFT 2 -> g
-    // NOT x -> h
-    // NOT y -> i";
-
     let variable = "a".to_owned();
-    let context = make_context(&input);
-    let result = eval_expression(&Expression::Term(Term::Variable(variable)), &context);
+    let mut context = make_context(&input);
+    let result = eval_expression(
+        &Expression::Term(Term::Variable(variable)),
+        &mut context,
+    );
     println!("1: {:?}", result);
 }
 
@@ -139,7 +156,9 @@ mod tests {
         );
         assert_eq!(
             parse_expression("NOT y"),
-            Expression::Operation(Operation::Not(Term::Variable("y".to_string())))
+            Expression::Operation(Operation::Not(Term::Variable(
+                "y".to_string()
+            )))
         );
     }
 
@@ -147,15 +166,12 @@ mod tests {
     fn test_parse_line() {
         assert_eq!(
             parse_line("456 -> y"),
-            (
-                Term::Variable("y".to_string()),
-                Expression::Term(Term::Value(456))
-            )
+            ("y".to_string(), Expression::Term(Term::Value(456)))
         );
         assert_eq!(
             parse_line("x AND y -> d"),
             (
-                Term::Variable("d".to_string()),
+                "d".to_string(),
                 Expression::Operation(Operation::And(
                     Term::Variable("x".to_string()),
                     Term::Variable("y".to_string())
@@ -165,8 +181,10 @@ mod tests {
         assert_eq!(
             parse_line("NOT y -> i"),
             (
-                Term::Variable("i".to_string()),
-                Expression::Operation(Operation::Not(Term::Variable("y".to_string())))
+                "i".to_string(),
+                Expression::Operation(Operation::Not(Term::Variable(
+                    "y".to_string()
+                )))
             )
         );
     }
@@ -179,24 +197,20 @@ x AND y -> d
 NOT d -> h";
 
         let expected: Context = vec![
+            ("x".to_string(), Expression::Term(Term::Value(123))),
+            ("y".to_string(), Expression::Term(Term::Value(456))),
             (
-                Term::Variable("x".to_string()),
-                Expression::Term(Term::Value(123)),
-            ),
-            (
-                Term::Variable("y".to_string()),
-                Expression::Term(Term::Value(456)),
-            ),
-            (
-                Term::Variable("d".to_string()),
+                "d".to_string(),
                 Expression::Operation(Operation::And(
                     Term::Variable("x".to_string()),
                     Term::Variable("y".to_string()),
                 )),
             ),
             (
-                Term::Variable("h".to_string()),
-                Expression::Operation(Operation::Not(Term::Variable("d".to_string()))),
+                "h".to_string(),
+                Expression::Operation(Operation::Not(Term::Variable(
+                    "d".to_string(),
+                ))),
             ),
         ]
         .into_iter()
