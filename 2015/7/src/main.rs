@@ -2,46 +2,69 @@ use core::panic;
 use std::collections::HashMap;
 use std::fs;
 
-type Context = HashMap<Variable, ValueOrOperation>;
-type Variable = String;
+type Context = HashMap<Term, Expression>;
 
-#[derive(Debug, PartialEq)]
-enum ValueOrOperation {
+#[derive(Eq, Hash, Debug, PartialEq)]
+enum Term {
+    Variable(String),
     Value(i32),
-    And(Variable, Variable),
-    Or(Variable, Variable),
-    Lshift(Variable, i32),
-    Rshift(Variable, i32),
-    Not(Variable),
 }
 
-type Definition = (Variable, ValueOrOperation);
+#[derive(Debug, PartialEq)]
+enum Operation {
+    And(Term, Term),
+    Or(Term, Term),
+    Lshift(Term, Term),
+    Rshift(Term, Term),
+    Not(Term),
+}
 
-fn parse_value_or_operation(value_or_operation: &str) -> ValueOrOperation {
-    let parts = value_or_operation.split(" ").collect::<Vec<&str>>();
+#[derive(Debug, PartialEq)]
+enum Expression {
+    Term(Term),
+    Operation(Operation),
+}
 
-    match parts.as_slice() {
-        [left, "AND", right] => ValueOrOperation::And(left.to_string(), right.to_string()),
-        [left, "OR", right] => ValueOrOperation::Or(left.to_string(), right.to_string()),
-        [left, "LSHIFT", right] => {
-            ValueOrOperation::Lshift(left.to_string(), right.parse::<i32>().unwrap())
-        }
-        [left, "RSHIFT", right] => {
-            ValueOrOperation::Rshift(left.to_string(), right.parse::<i32>().unwrap())
-        }
-        ["NOT", variable] => ValueOrOperation::Not(variable.to_string()),
-        [value] => ValueOrOperation::Value(value.parse::<i32>().unwrap()),
-        _ => panic!("Unsupported pattern for value or operation"),
+fn parse_term(term: &str) -> Term {
+    if let Ok(number) = term.parse::<i32>() {
+        Term::Value(number)
+    } else {
+        Term::Variable(term.to_string())
     }
 }
 
-fn parse_line(line: &str) -> Definition {
+fn parse_operation(operation: &str) -> Operation {
+    let parts = operation.split(" ").collect::<Vec<&str>>();
+
+    match parts.as_slice() {
+        [left, "AND", right] => Operation::And(parse_term(left), parse_term(right)),
+        [left, "OR", right] => Operation::Or(parse_term(left), parse_term(right)),
+        [left, "LSHIFT", right] => Operation::Lshift(parse_term(left), parse_term(right)),
+        [left, "RSHIFT", right] => Operation::Rshift(parse_term(left), parse_term(right)),
+        ["NOT", term] => Operation::Not(parse_term(term)),
+        _ => panic!("Unsupported pattern for operation"),
+    }
+}
+
+fn parse_expression(expression: &str) -> Expression {
+    let spaces = expression.chars().filter(|&c| c == ' ').count();
+
+    if spaces == 0 {
+        Expression::Term(parse_term(expression))
+    } else if spaces >= 1 && spaces <= 2 {
+        Expression::Operation(parse_operation(expression))
+    } else {
+        panic!("Unsupported pattern for value or operation");
+    }
+}
+
+fn parse_line(line: &str) -> (Term, Expression) {
     let parts = line.split(" -> ").collect::<Vec<&str>>();
 
     match parts.as_slice() {
-        [value_or_operation, variable] => {
-            let parsed = parse_value_or_operation(value_or_operation);
-            (variable.to_string(), parsed)
+        [expression, variable] => {
+            let variable = Term::Variable(variable.to_string());
+            (variable, parse_expression(expression))
         }
         _ => panic!("Unsupported definition line"),
     }
@@ -50,20 +73,21 @@ fn parse_line(line: &str) -> Definition {
 fn make_context(input: &str) -> Context {
     let definitions = input.lines().map(parse_line).collect::<Vec<_>>();
     let mut context: Context = HashMap::new();
-    for (variable, variable_or_operation) in definitions {
-        context.insert(variable, variable_or_operation);
+    for (term, expression) in definitions {
+        context.insert(term, expression);
     }
     context
 }
 
-fn eval(variable_or_operation: ValueOrOperation, context: Context) {
+fn eval(expression: Expression, context: Context) {
     todo!()
 }
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
     let context = make_context(&input);
-    println!("{:?}", context);
+    let result = eval(Expression::Term(Term::Variable("a".to_string())), context);
+    println!("{:?}", result);
     // println!("{:?}", test_input);
     // let text = fs::read_to_string("./input.txt").unwrap();
     // let instructions = text.lines().map(line_to_instruction).collect::<Vec<_>>();
@@ -74,30 +98,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_value_or_operation() {
+    fn test_parse_expression() {
+        assert_eq!(parse_expression("123"), Expression::Term(Term::Value(123)));
         assert_eq!(
-            parse_value_or_operation("123"),
-            ValueOrOperation::Value(123)
+            parse_expression("x AND y"),
+            Expression::Operation(Operation::And(
+                Term::Variable("x".to_string()),
+                Term::Variable("y".to_string())
+            ))
         );
         assert_eq!(
-            parse_value_or_operation("x AND y"),
-            ValueOrOperation::And("x".to_string(), "y".to_string())
-        );
-        assert_eq!(
-            parse_value_or_operation("x OR y"),
-            ValueOrOperation::Or("x".to_string(), "y".to_string())
-        );
-        assert_eq!(
-            parse_value_or_operation("x LSHIFT 2"),
-            ValueOrOperation::Lshift("x".to_string(), 2)
-        );
-        assert_eq!(
-            parse_value_or_operation("y RSHIFT 2"),
-            ValueOrOperation::Rshift("y".to_string(), 2)
-        );
-        assert_eq!(
-            parse_value_or_operation("NOT y"),
-            ValueOrOperation::Not("y".to_string())
+            parse_expression("NOT y"),
+            Expression::Operation(Operation::Not(Term::Variable("y".to_string())))
         );
     }
 
@@ -105,43 +117,27 @@ mod tests {
     fn test_parse_line() {
         assert_eq!(
             parse_line("456 -> y"),
-            ("y".to_string(), ValueOrOperation::Value(456))
+            (
+                Term::Variable("y".to_string()),
+                Expression::Term(Term::Value(456))
+            )
         );
         assert_eq!(
             parse_line("x AND y -> d"),
             (
-                "d".to_string(),
-                ValueOrOperation::And("x".to_string(), "y".to_string())
-            )
-        );
-        assert_eq!(
-            parse_line("x OR y -> e"),
-            (
-                "e".to_string(),
-                ValueOrOperation::Or("x".to_string(), "y".to_string())
-            )
-        );
-        assert_eq!(
-            parse_line("x LSHIFT 2 -> f"),
-            (
-                "f".to_string(),
-                ValueOrOperation::Lshift("x".to_string(), 2)
-            )
-        );
-        assert_eq!(
-            parse_line("y RSHIFT 2 -> g"),
-            (
-                "g".to_string(),
-                ValueOrOperation::Rshift("y".to_string(), 2)
+                Term::Variable("d".to_string()),
+                Expression::Operation(Operation::And(
+                    Term::Variable("x".to_string()),
+                    Term::Variable("y".to_string())
+                ))
             )
         );
         assert_eq!(
             parse_line("NOT y -> i"),
-            ("i".to_string(), ValueOrOperation::Not("y".to_string()))
-        );
-        assert_eq!(
-            parse_line("123 -> i"),
-            ("i".to_string(), ValueOrOperation::Value(123))
+            (
+                Term::Variable("i".to_string()),
+                Expression::Operation(Operation::Not(Term::Variable("y".to_string())))
+            )
         );
     }
 
@@ -150,33 +146,28 @@ mod tests {
         let test_input = "123 -> x
 456 -> y
 x AND y -> d
-x OR y -> e
-x LSHIFT 2 -> f
-y RSHIFT 2 -> g
-NOT x -> h
-NOT y -> i";
+NOT d -> h";
 
         let expected: Context = vec![
-            ("x".to_string(), ValueOrOperation::Value(123)),
-            ("y".to_string(), ValueOrOperation::Value(456)),
             (
-                "d".to_string(),
-                ValueOrOperation::And("x".to_string(), "y".to_string()),
+                Term::Variable("x".to_string()),
+                Expression::Term(Term::Value(123)),
             ),
             (
-                "e".to_string(),
-                ValueOrOperation::Or("x".to_string(), "y".to_string()),
+                Term::Variable("y".to_string()),
+                Expression::Term(Term::Value(456)),
             ),
             (
-                "f".to_string(),
-                ValueOrOperation::Lshift("x".to_string(), 2),
+                Term::Variable("d".to_string()),
+                Expression::Operation(Operation::And(
+                    Term::Variable("x".to_string()),
+                    Term::Variable("y".to_string()),
+                )),
             ),
             (
-                "g".to_string(),
-                ValueOrOperation::Rshift("y".to_string(), 2),
+                Term::Variable("h".to_string()),
+                Expression::Operation(Operation::Not(Term::Variable("d".to_string()))),
             ),
-            ("h".to_string(), ValueOrOperation::Not("x".to_string())),
-            ("i".to_string(), ValueOrOperation::Not("y".to_string())),
         ]
         .into_iter()
         .collect();
