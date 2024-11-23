@@ -1,0 +1,11 @@
+[package]
+name = "advent8"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cargo-watch = "8.5.3"
+encoding = "0.2.33"
+regex = "1.11.1"
+serde_json = "1.0.133"
+
