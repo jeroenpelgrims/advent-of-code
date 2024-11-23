@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fmt::format, fs};
 
 fn hex_to_char(a: &char, b: &char) -> char {
     let str = vec![*a, *b].to_vec().iter().collect::<String>();
@@ -34,23 +34,36 @@ fn unescape(input: &str) -> String {
     unescaped.into_iter().collect()
 }
 
-fn answer1(input: &str) -> usize {
-    let code_lens = input
+fn escape(input: &str) -> String {
+    let content: String = input
+        .chars()
+        .flat_map(|c| match c {
+            '\\' => vec!['\\', '\\'],
+            '"' => vec!['\\', '"'],
+            c => vec![c],
+        })
+        .collect();
+    format!("\"{}\"", content)
+}
+
+fn number_of_chars(input: &str, to_apply: fn(&str) -> String) -> usize {
+    input
         .split("\n")
+        .map(to_apply)
         .map(|line| line.chars().collect::<Vec<char>>().len())
-        .fold(0, |acc, x| acc + x);
-    let str_lens = input
-        .split("\n")
-        .map(unescape)
-        .map(|line| line.chars().collect::<Vec<char>>().len())
-        .fold(0, |acc, x| acc + x);
-    return code_lens - str_lens;
+        .fold(0, |acc, x| acc + x)
 }
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
-    let part1 = answer1(&input);
+
+    let part1 = number_of_chars(&input, |x| x.to_string())
+        - number_of_chars(&input, unescape);
     println!("1: {:?}", part1);
+
+    let part2 = number_of_chars(&input, escape)
+        - number_of_chars(&input, |x| x.to_string());
+    println!("2: {:?}", part2);
 }
 
 #[cfg(test)]
@@ -80,9 +93,7 @@ mod tests {
     }
 
     #[test]
-    fn test_input_1() {
-        let unescaped = unescape(r#""njro\x68qgbx\xe4af\"\\suan""#);
-        assert_eq!(r#"njrohqgbxäaf"\suan"#, unescaped);
-        assert_eq!(1, "ä".len());
+    fn test_encode() {
+        assert_eq!(r#""\"\"""#, escape(r#""""#));
     }
 }
