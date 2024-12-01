@@ -1,4 +1,4 @@
-use std::{fs, iter::zip};
+use std::{collections::HashMap, fs, iter::zip};
 
 fn parse_line(line: &str) -> (i32, i32) {
     let elems = line.split("   ").collect::<Vec<&str>>();
@@ -15,15 +15,33 @@ fn tuples_to_lists(tuples: Vec<(i32, i32)>) -> (Vec<i32>, Vec<i32>) {
     (a, b)
 }
 
-fn total_distance(a: Vec<i32>, b: Vec<i32>) -> i32 {
+fn total_distance(a: &Vec<i32>, b: &Vec<i32>) -> i32 {
     zip(a, b).fold(0, |result, (a, b)| result + (a - b).abs())
+}
+
+fn frequencies(xs: &Vec<i32>) -> HashMap<i32, i32> {
+    let mut map: HashMap<i32, i32> = HashMap::new();
+    for x in xs {
+        map.entry(x.clone())
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+    map
+}
+
+fn similarity_score(a: &Vec<i32>, b: &Vec<i32>) -> i32 {
+    let freq = frequencies(&b);
+    a.into_iter().fold(0, |result, a| {
+        result + (a * freq.get(&a).unwrap_or(&0)).abs()
+    })
 }
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
     let items: Vec<(i32, i32)> = input.lines().map(parse_line).collect();
     let (a, b) = tuples_to_lists(items);
-    println!("1: {}", total_distance(a, b));
+    println!("1: {}", total_distance(&a, &b));
+    println!("2: {}", similarity_score(&a, &b));
 }
 
 #[cfg(test)]
