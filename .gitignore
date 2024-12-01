@@ -4,3 +4,4 @@ obj
 bin
 target
 .vscode
+Cargo.lock
