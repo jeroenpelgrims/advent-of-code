@@ -7,7 +7,6 @@ fn parse_line(line: &str) -> Vec<i32> {
 }
 
 fn is_safe(xs: &Vec<i32>, direction: i32) -> bool {
-    let _xs = format!("{:?}", xs);
     match xs.as_slice() {
         [] | [_] => true,
         [a, b, rest @ ..] => {
@@ -32,7 +31,7 @@ fn is_safe_tolerate1(xs: &Vec<i32>) -> bool {
         return true;
     }
 
-    for index in 0..(xs.len() - 1) {
+    for index in 0..xs.len() {
         let xs_removed: Vec<i32> = xs
             .iter()
             .enumerate()
@@ -47,7 +46,7 @@ fn is_safe_tolerate1(xs: &Vec<i32>) -> bool {
 }
 
 fn main() {
-    let input = fs::read_to_string("./test-input.txt").unwrap();
+    let input = fs::read_to_string("./input.txt").unwrap();
     let lines: Vec<_> = input.lines().into_iter().map(parse_line).collect();
     let safe_count1 = lines.iter().filter(|line| is_safe(line, 0)).count();
     println!("1: {:?}", safe_count1);
@@ -78,5 +77,16 @@ mod tests {
         assert!(is_safe_tolerate1(&vec![1, 3, 2, 4, 5]));
         assert!(is_safe_tolerate1(&vec![8, 6, 4, 4, 1]));
         assert!(is_safe_tolerate1(&vec![1, 3, 6, 7, 9]));
+    }
+
+    #[test]
+    fn test_is_safe_tolerate1_extra() {
+        assert!(is_safe_tolerate1(&vec![99, 1, 2, 3, 4, 5, 6]));
+        assert!(is_safe_tolerate1(&vec![1, 99, 2, 3, 4, 5, 6]));
+        assert!(is_safe_tolerate1(&vec![1, 2, 99, 3, 4, 5, 6]));
+        assert!(is_safe_tolerate1(&vec![1, 2, 3, 99, 4, 5, 6]));
+        assert!(is_safe_tolerate1(&vec![1, 2, 3, 4, 99, 5, 6]));
+        assert!(is_safe_tolerate1(&vec![1, 2, 3, 4, 5, 99, 6]));
+        assert!(is_safe_tolerate1(&vec![1, 2, 3, 4, 5, 6, 99]));
     }
 }
