@@ -4,6 +4,7 @@ use std::fs;
 #[derive(Debug)]
 struct Matrix(Vec<Vec<char>>);
 type Position = (isize, isize);
+type Direction = (isize, isize);
 
 impl Matrix {
     fn new(input: &str) -> Self {
@@ -30,7 +31,7 @@ impl Matrix {
         &self,
         (start_y, start_x): Position,
         count: usize,
-        direction: (isize, isize),
+        direction: Direction,
     ) -> Option<Vec<Position>> {
         let char_cells = vec![direction; count - 1].iter().fold(
             vec![(start_y, start_x)],
@@ -54,20 +55,20 @@ impl Matrix {
         &self,
         position: Position,
         word: &str,
-        direction: (isize, isize),
-    ) -> Option<Vec<char>> {
+        direction: Direction,
+    ) -> bool {
         let char_positions =
-            self.get_positions(position, word.len(), direction)?;
-        let chars: Vec<char> = char_positions
-            .iter()
-            .map(|position| self.at(*position))
-            .collect();
-        let string = String::from_iter(chars.clone());
+            self.get_positions(position, word.len(), direction);
 
-        if string.eq(word) {
-            Some(chars)
+        if let Some(char_positions) = char_positions {
+            let chars: Vec<char> = char_positions
+                .iter()
+                .map(|position| self.at(*position))
+                .collect();
+            let string = String::from_iter(chars.clone());
+            string.eq(word)
         } else {
-            None
+            false
         }
     }
 
@@ -75,38 +76,59 @@ impl Matrix {
         &self,
         position: Position,
         word: &str,
-    ) -> Vec<(Position, (isize, isize))> {
-        let directions: Vec<(isize, isize)> = (-1..=1)
+    ) -> Vec<Direction> {
+        let directions: Vec<Direction> = (-1..=1)
             .cartesian_product(-1..=1)
             .filter(|pair| *pair != (0, 0))
             .collect();
-        let results: Vec<(Position, (isize, isize))> = directions
+        directions
             .iter()
             .filter_map(|direction| {
-                self.find_word(position, word, *direction)?;
-                Some((position, *direction))
+                if self.find_word(position, word, *direction) {
+                    Some(*direction)
+                } else {
+                    None
+                }
             })
-            .collect();
-
-        results
+            .collect()
     }
 
     fn find_word_all_cells(&self, word: &str) -> usize {
         let all_positions =
             (0..=self.y_max()).cartesian_product(0..=self.x_max());
         let results: Vec<_> = all_positions
-            .clone()
             .flat_map(|position| self.find_word_all_directions(position, word))
             .collect();
         results.len()
+    }
+
+    fn has_x_mas(&self, position: Position) -> bool {
+        self.at(position) == 'A'
+            && (self.find_word(position, "AM", (-1, -1))
+                && self.find_word(position, "AS", (1, 1))
+                || self.find_word(position, "AS", (-1, -1))
+                    && self.find_word(position, "AM", (1, 1)))
+            && (self.find_word(position, "AS", (-1, 1))
+                && self.find_word(position, "AM", (1, -1))
+                || self.find_word(position, "AM", (-1, 1))
+                    && self.find_word(position, "AS", (1, -1)))
+    }
+
+    fn find_all_x_mas(&self) -> usize {
+        let all_positions =
+            (0..=self.y_max()).cartesian_product(0..=self.x_max());
+        let results: Vec<_> = all_positions
+            .filter(|position| self.has_x_mas(*position))
+            .collect();
+        return results.len();
     }
 }
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
     let matrix = Matrix::new(&input);
-    let res = matrix.find_word_all_cells("XMAS");
-    println!("1: {:?}", res);
+    println!("1: {:?}", matrix.find_word_all_cells("XMAS"));
+    println!("2: {:?}", matrix.find_all_x_mas());
 }
 
 #[cfg(test)]
