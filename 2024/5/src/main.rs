@@ -1,4 +1,5 @@
-use std::{collections::HashMap, fs};
+use itertools::Itertools;
+use std::{cmp::Ordering, fs};
 
 type Update = Vec<i32>;
 type Order = Vec<(i32, i32)>;
@@ -37,42 +38,45 @@ fn parse_input(input: &str) -> Config {
 }
 
 fn is_valid(update: Update, order: &Order) -> bool {
-    let relevant_order: Vec<_> = order
-        .iter()
-        .filter(|(a, b)| update.contains(a) && update.contains(b))
-        .collect();
-    update.is_sorted_by(|a, b| {
-        let befores: Vec<_> = relevant_order
-            .iter()
-            .filter(|(x, y)| x == a)
-            .map(|(x, y)| *y)
-            .collect();
-        befores.contains(b)
-    })
+    update.is_sorted_by(|a, b| get_order(a, b, order) == Ordering::Less)
 }
 
-fn sum_of_centers(xs: Vec<&Update>) -> i32 {
+fn sum_of_centers(xs: Vec<Update>) -> i32 {
     let middles = xs.iter().map(|update| update[update.len() / 2]);
     middles.fold(0, |total, e| total + e)
+}
+
+fn get_order(a: &i32, b: &i32, order: &Order) -> Ordering {
+    let order_pair = order
+        .iter()
+        .filter(|(x, y)| x == a && y == b || x == b && y == a)
+        .next();
+    match order_pair {
+        Some((x, y)) if x == a && y == b => Ordering::Less,
+        Some((x, y)) if x == b && y == a => Ordering::Greater,
+        _ => Ordering::Equal,
+    }
 }
 
 fn main() {
     let input = fs::read_to_string("./input.txt").unwrap();
     let config = parse_input(&input);
-    let valids: Vec<_> = config
+    let (valids, invalids) = config
         .updates
+        .into_iter()
+        .partition(|update| is_valid(update.to_vec(), &config.order));
+
+    println!("1: {:?}", sum_of_centers(valids));
+
+    let fixed_invalids: Vec<Update> = invalids
         .iter()
-        .filter(|update| is_valid(update.to_vec(), &config.order))
+        .map(|update| {
+            update
+                .iter()
+                .sorted_by(|a, b| get_order(a, b, &config.order))
+                .map(|x| *x)
+                .collect::<Update>()
+        })
         .collect();
-    let sum = sum_of_centers(valids);
-
-    println!("1: {:?}", sum);
+    println!("1: {:?}", sum_of_centers(fixed_invalids));
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_is_safe() {}
-// }
