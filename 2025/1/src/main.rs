@@ -21,35 +21,57 @@ fn parse_input(input: String) -> Vec<Rotation> {
     input.lines().map(parse_input_line).collect()
 }
 
-fn apply_rotation(rotation: Rotation, value: i32) -> i32 {
-    match rotation {
-        Rotation::Left(amount) => (value + (100 - (amount % 100))) % 100,
-        Rotation::Right(amount) => (value + amount) % 100,
+fn apply_rotation(rot: &Rotation, start_value: i32) -> (i32, i32) {
+    match rot {
+        Rotation::Left(amount) => {
+            let overflows = amount / 100 as i32;
+            let rest = amount % 100;
+            let overflow = if start_value - rest <= 0 && start_value != 0 {
+                1
+            } else {
+                0
+            };
+            let next = (start_value - rest).rem_euclid(100);
+            (next, overflows + overflow)
+        }
+        Rotation::Right(amount) => {
+            let overflows = amount / 100 as i32;
+            let rest = amount % 100;
+            let overflow = if start_value + rest >= 99 && start_value != 0 {
+                1
+            } else {
+                0
+            };
+            let next = (start_value + rest) % 100;
+            (next, overflows + overflow)
+        }
     }
 }
 
-fn apply_rotations(rotations: Vec<Rotation>, start_value: i32) -> Vec<i32> {
-    let results =
-        rotations
-            .into_iter()
-            .fold(vec![start_value], |results, rot| {
-                let head = &results[0];
-                let rest = &results[1..];
-                let next = apply_rotation(rot, *head);
-                vec![vec![next], vec![*head], rest.to_vec()].concat()
-                // vec![next, *head].extend_from_slice(rest)
-            });
-    results.into_iter().rev().collect()
+fn apply_rotations(
+    rotations: &Vec<Rotation>,
+    start_value: i32,
+) -> Vec<(i32, i32)> {
+    let values = rotations.into_iter().fold(vec![], |results, rot| {
+        let previous = results.last().unwrap_or(&(start_value, 0)).clone();
+        let (start_value, _) = previous;
+        let next_val = apply_rotation(rot, start_value);
+        vec![results, vec![next_val]].concat()
+    });
+    values
 }
 
 fn main() {
     let input = fs::read_to_string("input.txt").unwrap();
     let input = parse_input(input);
-    let part1 = apply_rotations(input, 50)
+    let values = apply_rotations(&input, 50);
+    let part1 = &values
         .iter()
-        .fold(0, |acc, &x| if x == 0 { acc + 1 } else { acc });
+        .fold(0, |acc, &(value, _)| if value == 0 { acc + 1 } else { acc });
+    let part2: i32 = values.iter().map(|(_, overflows)| overflows).sum();
 
     println!("Part 1: {}", part1);
+    println!("Part 2: {}", part2);
 }
 
 #[cfg(test)]
@@ -130,26 +152,26 @@ mod tests {
 
         #[test]
         fn should_apply_left_rotation() {
-            let result = apply_rotation(Rotation::Left(10), 50);
-            assert_eq!(result, 40);
+            let result = apply_rotation(&Rotation::Left(10), 50);
+            assert_eq!(result, (40, 0));
         }
 
         #[test]
         fn should_apply_right_rotation() {
-            let result = apply_rotation(Rotation::Right(10), 50);
-            assert_eq!(result, 60);
+            let result = apply_rotation(&Rotation::Right(10), 50);
+            assert_eq!(result, (60, 0));
         }
 
         #[test]
         fn should_wrap_around_on_left_rotation() {
-            let result = apply_rotation(Rotation::Left(1), 0);
-            assert_eq!(result, 99);
+            let result = apply_rotation(&Rotation::Left(1), 0);
+            assert_eq!(result, (99, 0));
         }
 
         #[test]
         fn should_wrap_around_on_right_rotation() {
-            let result = apply_rotation(Rotation::Right(1), 99);
-            assert_eq!(result, 0);
+            let result = apply_rotation(&Rotation::Right(1), 99);
+            assert_eq!(result, (0, 1));
         }
     }
 
@@ -160,8 +182,67 @@ mod tests {
         fn should_apply_multiple_rotations() {
             let input = fs::read_to_string("./test-input.txt").unwrap();
             let input = parse_input(input);
-            let result = apply_rotations(input, 50);
-            assert_eq!(result, vec![50, 82, 52, 0, 95, 55, 0, 99, 0, 14, 32]);
+            let result = apply_rotations(&input, 50);
+            assert_eq!(
+                result,
+                vec![
+                    (82, 1),
+                    (52, 0),
+                    (0, 1),
+                    (95, 0),
+                    (55, 1),
+                    (0, 1),
+                    (99, 0),
+                    (0, 1),
+                    (14, 0),
+                    (32, 1)
+                ]
+            );
+        }
+    }
+
+    mod apply_rotation2 {
+        use super::*;
+
+        #[test]
+        fn detects_simple_overflow() {
+            let result = apply_rotation(&Rotation::Left(60), 50);
+            assert_eq!(result, (90, 1));
+            let result = apply_rotation(&Rotation::Right(60), 50);
+            assert_eq!(result, (10, 1));
+        }
+
+        #[test]
+        fn detects_multiple_overflows() {
+            let result = apply_rotation(&Rotation::Left(260), 50);
+            assert_eq!(result, (90, 3));
+            let result = apply_rotation(&Rotation::Right(260), 50);
+            assert_eq!(result, (10, 3));
+        }
+
+        #[test]
+        fn works_with_example_input() {
+            let input = fs::read_to_string("./test-input.txt").unwrap();
+            let input = parse_input(input);
+            let values = apply_rotations(&input, 50);
+            let overflows: i32 =
+                values.iter().map(|(_, overflow)| overflow).sum();
+
+            assert_eq!(overflows, 6);
+        }
+
+        #[test]
+        fn overflow_from_start_value_zero_is_not_overflow() {
+            let result = apply_rotation(&Rotation::Left(1), 0);
+            assert_eq!(result, (99, 0));
+            let result = apply_rotation(&Rotation::Right(1), 0);
+            assert_eq!(result, (1, 0));
+        }
+
+        #[test]
+        fn many_overflows() {
+            let result = apply_rotation(&&Rotation::Right(1000), 50);
+            assert_eq!(result, (50, 10));
         }
     }
 }
