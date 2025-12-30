@@ -37,7 +37,7 @@ fn apply_rotation(rot: &Rotation, start_value: i32) -> (i32, i32) {
         Rotation::Right(amount) => {
             let overflows = amount / 100 as i32;
             let rest = amount % 100;
-            let overflow = if start_value + rest >= 99 && start_value != 0 {
+            let overflow = if start_value + rest > 99 && start_value != 0 {
                 1
             } else {
                 0
@@ -173,36 +173,6 @@ mod tests {
             let result = apply_rotation(&Rotation::Right(1), 99);
             assert_eq!(result, (0, 1));
         }
-    }
-
-    mod apply_rotations {
-        use super::*;
-
-        #[test]
-        fn should_apply_multiple_rotations() {
-            let input = fs::read_to_string("./test-input.txt").unwrap();
-            let input = parse_input(input);
-            let result = apply_rotations(&input, 50);
-            assert_eq!(
-                result,
-                vec![
-                    (82, 1),
-                    (52, 0),
-                    (0, 1),
-                    (95, 0),
-                    (55, 1),
-                    (0, 1),
-                    (99, 0),
-                    (0, 1),
-                    (14, 0),
-                    (32, 1)
-                ]
-            );
-        }
-    }
-
-    mod apply_rotation2 {
-        use super::*;
 
         #[test]
         fn detects_simple_overflow() {
@@ -241,8 +211,49 @@ mod tests {
 
         #[test]
         fn many_overflows() {
-            let result = apply_rotation(&&Rotation::Right(1000), 50);
+            let result = apply_rotation(&Rotation::Right(1000), 50);
             assert_eq!(result, (50, 10));
+        }
+
+        #[test]
+        fn many_overflows_but_ends_on_0() {
+            let result = apply_rotation(&Rotation::Right(1000), 0);
+            assert_eq!(result, (0, 10));
+            let result = apply_rotation(&Rotation::Left(1000), 0);
+            assert_eq!(result, (0, 10));
+        }
+        #[test]
+        fn extra_cases() {
+            assert_eq!(apply_rotation(&Rotation::Right(1), 99), (0, 1));
+            assert_eq!(apply_rotation(&Rotation::Left(2), 1), (99, 1));
+            assert_eq!(apply_rotation(&Rotation::Right(49), 50), (99, 0));
+            assert_eq!(apply_rotation(&Rotation::Left(49), 50), (1, 0));
+        }
+    }
+
+    mod apply_rotations {
+        use super::*;
+
+        #[test]
+        fn should_apply_multiple_rotations() {
+            let input = fs::read_to_string("./test-input.txt").unwrap();
+            let input = parse_input(input);
+            let result = apply_rotations(&input, 50);
+            assert_eq!(
+                result,
+                vec![
+                    (82, 1),
+                    (52, 0),
+                    (0, 1),
+                    (95, 0),
+                    (55, 1),
+                    (0, 1),
+                    (99, 0),
+                    (0, 1),
+                    (14, 0),
+                    (32, 1)
+                ]
+            );
         }
     }
 }
