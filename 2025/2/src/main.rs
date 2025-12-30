@@ -1,6 +1,8 @@
 use core::str;
 use std::fs;
 
+use fancy_regex::Regex;
+
 type ProductId = u64;
 type ProductIdRange = (ProductId, ProductId);
 
@@ -30,17 +32,42 @@ fn is_valid(id: ProductId) -> bool {
     return format!("{}{}", begin, begin) != str_id;
 }
 
+fn is_valid2(id: ProductId) -> bool {
+    let str_id = id.to_string();
+    let mid = str_id.len() / 2;
+    for i in 1..=mid {
+        let repeat = &str_id[0..i];
+        let times = str_id.len() / repeat.len();
+        let candidate = repeat.repeat(times);
+        if candidate == str_id {
+            return false;
+        }
+    }
+
+    true
+}
+
 fn main() {
-    let part1 = read_input("input.txt".to_string())
+    let input = read_input("input.txt".to_string())
         .into_iter()
         .map(expand_range)
         .collect::<Vec<_>>()
-        .concat()
+        .concat();
+    let part1 = input
+        .clone()
         .into_iter()
         .filter(|id| !is_valid(*id))
         .map(|id| id as u64)
         .sum::<u64>();
-    println!("{:?}", part1);
+    println!("part1: {:?}", part1);
+
+    let part2 = input
+        .clone()
+        .into_iter()
+        .filter(|id| !is_valid2(*id))
+        .map(|id| id as u64)
+        .sum::<u64>();
+    println!("part2: {:?}", part2);
 }
 
 #[cfg(test)]
@@ -114,6 +141,26 @@ mod tests {
         #[test]
         fn detects_valid_correctly() {
             assert!(is_valid(446443));
+        }
+    }
+
+    mod is_valid2 {
+        use super::*;
+
+        #[test]
+        fn detects_invalid_correctly() {
+            assert!(!is_valid2(11));
+            assert!(!is_valid2(22));
+            assert!(!is_valid2(99));
+            assert!(!is_valid2(1010));
+            assert!(!is_valid2(38593859));
+            assert!(!is_valid2(1188511885));
+            assert!(!is_valid2(2121212121));
+        }
+
+        #[test]
+        fn detects_valid_correctly() {
+            assert!(is_valid2(446443));
         }
     }
 }
