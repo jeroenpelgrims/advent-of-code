@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::fs;
 
 type BatteryBank = Vec<u8>;
@@ -12,53 +13,62 @@ fn parse_input(input: &str) -> Vec<BatteryBank> {
     input.lines().map(parse_line).collect()
 }
 
-fn max_joltage(bank: &BatteryBank) -> u32 {
-    let largest = bank
-        .iter()
-        .enumerate()
-        .fold(None, |max, item| match max {
-            None => Some(item),
-            Some(current_max) if item.1 > current_max.1 => Some(item),
-            _ => max,
-        })
-        .unwrap();
+/*
+Look at the leftmost digits. (there need to be at least n digits left to the right)
+Take the highest digit among them. Store this together with the index in the result.
+Repeat, starting from the index after the chosen digit, until n digits have been chosen.
+(But this time there only need to be n - result.len() digits left to the right)
+ */
+fn max_joltage(bank: &BatteryBank, n: usize) -> u64 {
+    let mut result: Vec<(usize, u64)> = vec![];
+    for padding in 0..n {
+        let max_index = result.last().map(|item| item.0).unwrap_or(default);
+        let candidates = bank.iter().enumerate();
+        let candidates = candidates.take(bank.len() - padding);
 
-    let second_largest_right = bank
-        .iter()
-        .enumerate()
-        .filter(|(index, _)| index > &largest.0)
-        .fold(None, |max, item| match max {
-            None => Some(item),
-            Some(current_max) if item.1 > current_max.1 => Some(item),
-            _ => max,
-        });
-
-    if let Some(second) = second_largest_right {
-        return (*largest.1 as u32) * 10 + (*second.1 as u32);
+        let candidates = candidates[0..(bank.len() - padding)];
+        let max_candidate = candidates.iter().max().unwrap();
     }
+    0
+    // let max = [].iter().enumerate().fold(vec![], |acc, | vec![]);
+    // 0
 
-    let second_largest_left = bank
-        .iter()
-        .enumerate()
-        .filter(|(index, _)| index < &largest.0)
-        .fold(None, |max, item| match max {
-            None => Some(item),
-            Some(current_max) if item.1 > current_max.1 => Some(item),
-            _ => max,
-        });
+    // let combos = bank.iter().combinations(n);
+    // println!("combos count: {}", combos.clone().count());
+    // let max_first = combos
+    //     .clone()
+    //     .max_by_key(|combo| combo[0] * 10 + combo[1])
+    //     .unwrap();
+    // println!("max first two digits: {}{}", max_first[0], max_first[1]);
+    // let combos = combos
+    //     .filter(|combo| combo[0] == max_first[0] && combo[1] == max_first[1])
+    //     .take(10);
+    // println!("filtered combos count: {}", combos.clone().count());
 
-    if let Some(second) = second_largest_left {
-        return (*second.1 as u32) * 10 + (*largest.1 as u32);
-    }
-
-    panic!("Battery bank must have at least two batteries");
+    // // let combos = combos.sorted_by(|a, b| Ord::cmp(a[0], b[0])).filter;
+    // combos
+    //     .map(|combo| {
+    //         combo
+    //             .iter()
+    //             .map(|&&digit| digit as u64)
+    //             .fold(0, |acc, d| acc * 10 + d)
+    //     })
+    //     .max()
+    //     .unwrap()
 }
 
 fn main() {
     let input = fs::read_to_string("input.txt").unwrap();
     let banks = parse_input(&input);
 
-    println!("{:?}", banks.iter().map(max_joltage).sum::<u32>());
+    println!(
+        "part 1: {:?}",
+        banks.iter().map(|bank| max_joltage(bank, 2)).sum::<u64>()
+    );
+    println!(
+        "part 2: {:?}",
+        banks.iter().map(|bank| max_joltage(bank, 12)).sum::<u64>()
+    );
 }
 
 #[cfg(test)]
@@ -69,27 +79,27 @@ mod tests {
         use super::*;
 
         #[test]
-        fn case_1() {
-            let bank = parse_line("987654321111111");
-            assert_eq!(max_joltage(&bank), 98);
-        }
-
-        #[test]
         fn case_2() {
+            let bank = parse_line("987654321111111");
+            assert_eq!(max_joltage(&bank, 2), 98);
             let bank = parse_line("811111111111119");
-            assert_eq!(max_joltage(&bank), 89);
-        }
-
-        #[test]
-        fn case_3() {
+            assert_eq!(max_joltage(&bank, 2), 89);
             let bank = parse_line("234234234234278");
-            assert_eq!(max_joltage(&bank), 78);
+            assert_eq!(max_joltage(&bank, 2), 78);
+            let bank = parse_line("818181911112111");
+            assert_eq!(max_joltage(&bank, 2), 92);
         }
 
         #[test]
-        fn case_4() {
+        fn case_12() {
+            let bank = parse_line("987654321111111");
+            assert_eq!(max_joltage(&bank, 12), 987654321111);
+            let bank = parse_line("811111111111119");
+            assert_eq!(max_joltage(&bank, 12), 811111111119);
+            let bank = parse_line("234234234234278");
+            assert_eq!(max_joltage(&bank, 12), 434234234278);
             let bank = parse_line("818181911112111");
-            assert_eq!(max_joltage(&bank), 92);
+            assert_eq!(max_joltage(&bank, 12), 888911112111);
         }
     }
 }
