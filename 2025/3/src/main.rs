@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use std::fs;
 
 type BatteryBank = Vec<u8>;
@@ -20,41 +19,36 @@ Repeat, starting from the index after the chosen digit, until n digits have been
 (But this time there only need to be n - result.len() digits left to the right)
  */
 fn max_joltage(bank: &BatteryBank, n: usize) -> u64 {
-    let mut result: Vec<(usize, u64)> = vec![];
-    for padding in 0..n {
-        let max_index = result.last().map(|item| item.0).unwrap_or(default);
-        let candidates = bank.iter().enumerate();
-        let candidates = candidates.take(bank.len() - padding);
+    let mut result: Vec<(usize, u8)> = vec![];
+    let cells_with_indices = bank.into_iter().enumerate().collect::<Vec<_>>();
 
-        let candidates = candidates[0..(bank.len() - padding)];
-        let max_candidate = candidates.iter().max().unwrap();
+    while result.len() < n {
+        // Must be behind the last chosen digit
+        let candidate_range_start =
+            result.last().map(|item| item.0 + 1).unwrap_or(0);
+        // Must leave enough digits to the right
+        let candidate_range_end = bank.len() - (n - result.len() - 1);
+        let candidate_range =
+            &cells_with_indices[candidate_range_start..candidate_range_end];
+
+        let highest_candidate = candidate_range
+            .iter()
+            .fold(None, |max, item| match max {
+                None => Some(item.clone()),
+                Some((_, &max_value)) if item.1 > &max_value => {
+                    Some(item.clone())
+                }
+                Some(current_max) => Some(current_max),
+            })
+            .unwrap();
+
+        result.push((highest_candidate.0, highest_candidate.1.clone()));
     }
-    0
-    // let max = [].iter().enumerate().fold(vec![], |acc, | vec![]);
-    // 0
 
-    // let combos = bank.iter().combinations(n);
-    // println!("combos count: {}", combos.clone().count());
-    // let max_first = combos
-    //     .clone()
-    //     .max_by_key(|combo| combo[0] * 10 + combo[1])
-    //     .unwrap();
-    // println!("max first two digits: {}{}", max_first[0], max_first[1]);
-    // let combos = combos
-    //     .filter(|combo| combo[0] == max_first[0] && combo[1] == max_first[1])
-    //     .take(10);
-    // println!("filtered combos count: {}", combos.clone().count());
-
-    // // let combos = combos.sorted_by(|a, b| Ord::cmp(a[0], b[0])).filter;
-    // combos
-    //     .map(|combo| {
-    //         combo
-    //             .iter()
-    //             .map(|&&digit| digit as u64)
-    //             .fold(0, |acc, d| acc * 10 + d)
-    //     })
-    //     .max()
-    //     .unwrap()
+    result
+        .iter()
+        .map(|(_, digit)| *digit as u64)
+        .fold(0, |acc, d| acc * 10 + d)
 }
 
 fn main() {
