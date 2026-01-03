@@ -1,37 +1,31 @@
-use std::{collections::HashMap, fs};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
 
 use itertools::{Itertools, repeat_n};
 
-#[derive(Debug, Clone, Copy)]
-enum CellContent {
-    Empty,
-    Paper,
-}
-
 type Coordinates = (i32, i32); // (y, x)
-type Grid = HashMap<Coordinates, CellContent>;
+type Grid = HashSet<Coordinates>;
 
 fn parse_input(input: &str) -> Grid {
     input
         .lines()
         .enumerate()
         .flat_map(|(y, line)| {
-            line.chars().enumerate().map(move |(x, ch)| {
-                let content = match ch {
-                    '.' => CellContent::Empty,
-                    '@' => CellContent::Paper,
-                    _ => panic!("Unexpected character in input"),
-                };
-                ((y as i32, x as i32), content)
+            line.chars().enumerate().map(move |(x, ch)| match ch {
+                '@' => Some((y as i32, x as i32)),
+                _ => None,
             })
         })
+        .flatten()
         .collect()
 }
 
 fn find_neighbors<'a>(
     grid: &'a Grid,
     (y, x): Coordinates,
-) -> Vec<&'a CellContent> {
+) -> Vec<&'a Coordinates> {
     let modifiers = repeat_n(vec![-1, 0, 1], 2)
         .multi_cartesian_product()
         .map(|v| (v[0], v[1]))
@@ -44,30 +38,32 @@ fn find_neighbors<'a>(
     neighbors.collect::<Vec<_>>()
 }
 
-fn can_access_paper(grid: &Grid, (y, x): Coordinates) -> bool {
-    let contents = grid.get(&(y, x));
-    match contents {
-        None | Some(CellContent::Empty) => false,
-        Some(CellContent::Paper) => {
-            let paper_neighbors: i32 = find_neighbors(grid, (y, x))
-                .iter()
-                .map(|content| match content {
-                    CellContent::Paper => 1,
-                    _ => 0,
-                })
-                .sum();
-            paper_neighbors < 4
-        }
-    }
+fn can_access_paper(grid: &Grid, coords: Coordinates) -> bool {
+    let neighbors = find_neighbors(grid, coords);
+    grid.contains(&coords) && neighbors.len() < 4
+}
+
+fn get_accessible_papers(grid: &Grid) -> Vec<Coordinates> {
+    grid.iter()
+        .filter(|coordinate| can_access_paper(grid, **coordinate))
+        .cloned()
+        .collect()
 }
 
 fn main() {
-    let input = fs::read_to_string("./input.txt").unwrap();
-    let grid = parse_input(&input);
+    let input = fs::read_to_string("./test-input.txt").unwrap();
+    let mut grid = parse_input(&input);
 
-    let part1 = grid
-        .keys()
-        .filter(|coordinate| can_access_paper(&grid, **coordinate))
-        .count();
+    let part1 = get_accessible_papers(&grid).len();
     println!("part 1: {}", part1);
+
+    // while true {
+    //     let accessible_papers = get_accessible_papers(&grid);
+    //     if accessible_papers.is_empty() {
+    //         break;
+    //     }
+    //     for coord in accessible_papers {
+    //         grid.remove(&coord);
+    //     }
+    // }
 }
