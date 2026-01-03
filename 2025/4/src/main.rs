@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-};
+use std::{collections::HashSet, fs};
 
 use itertools::{Itertools, repeat_n};
 
@@ -51,19 +48,23 @@ fn get_accessible_papers(grid: &Grid) -> Vec<Coordinates> {
 }
 
 fn main() {
-    let input = fs::read_to_string("./test-input.txt").unwrap();
+    let input = fs::read_to_string("./input.txt").unwrap();
     let mut grid = parse_input(&input);
 
     let part1 = get_accessible_papers(&grid).len();
     println!("part 1: {}", part1);
 
-    // while true {
-    //     let accessible_papers = get_accessible_papers(&grid);
-    //     if accessible_papers.is_empty() {
-    //         break;
-    //     }
-    //     for coord in accessible_papers {
-    //         grid.remove(&coord);
-    //     }
-    // }
+    let mut removed = 0;
+    loop {
+        let accessible_papers = get_accessible_papers(&grid);
+        if accessible_papers.len() == 0 {
+            break;
+        }
+        removed += accessible_papers.len();
+        grid = accessible_papers.iter().fold(grid, |mut grid, coords| {
+            grid.remove(coords);
+            grid
+        });
+    }
+    println!("part 2: {}", removed);
 }
